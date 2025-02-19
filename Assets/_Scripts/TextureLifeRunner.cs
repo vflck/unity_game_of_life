@@ -1,13 +1,18 @@
-﻿using UnityEngine;
+﻿using System;
+using UnityEngine;
 using UnityEngine.UI;
 
 public class TextureLifeRunner : LifeRunner
 {
+    private readonly (sbyte,sbyte)[] neighbourOffsets = { (-1,1), (-1,0), (-1,-1), (0,1), (0,-1), (1,1), (1,0), (1,-1) };
+
     [SerializeField] private RawImage fieldRender;
+    private Texture2D texture;
+    private byte[] textureData;
 
     private int width, height;
-    private byte[] currentStepData, nextStepData;
-    private Texture2D texture;
+    private bool[,] currentStepData;
+    private byte[,] neighbours;
 
     public override void Init(Vector2Int fieldSize)
     {
@@ -15,64 +20,70 @@ public class TextureLifeRunner : LifeRunner
         height = fieldSize.y;
         fieldRender.rectTransform.sizeDelta = fieldSize;
 
-        currentStepData = new byte[width * height];
-        nextStepData = new byte[width * height];
+        currentStepData = new bool[width, height];
+        neighbours = new byte[width, height];
 
+        textureData = new byte[width * height];
         texture = new Texture2D(width, height, TextureFormat.Alpha8, false);
         texture.filterMode = FilterMode.Point;
-        SetTexture(currentStepData);
         fieldRender.texture = texture;
-    }
-    private void SetTexture(byte[] data)
-    {
-        texture.SetPixelData(data, 0);
-        texture.Apply();
-    }
 
-    public override void Run()
+        UpdateTexture();
+    }
+    private void UpdateTexture()
     {
         for (int x = 0; x < width; x++)
         {
             for (int y = 0; y < height; y++)
             {
-                byte neighbourCount = GetNeighbourCount(x, y);
-
-                int index = GetIndex(x, y);
-                if (IsCurrentCellAlive(index))
-                    SetNextCellAlive(index, neighbourCount >= 2 && neighbourCount <= 3);
-                else if (neighbourCount == 3)
-                    SetNextCellAlive(index, true);
+                textureData[x+y*height] = currentStepData[x,y] ? byte.MaxValue : byte.MinValue;
             }
         }
-
-        System.Array.Copy(nextStepData, currentStepData, currentStepData.Length);
-        SetTexture(currentStepData);
+        
+        texture.SetPixelData(textureData, 0);
+        texture.Apply();
     }
-    private byte GetNeighbourCount(int x, int y)
+
+    public override void Run()
     {
-        byte count = 0;
-        for (int i = -1; i <= 1; i++)
+        CollectAllNeighboursCount();
+        for (int x = 0; x < width; x++)
         {
-            for (int j = -1; j <= 1; j++)
+            for (int y = 0; y < height; y++)
             {
-                int index = GetIndex(x + i, y + j);
-                if (index < 0 || index >= currentStepData.Length)
-                    continue;
-
-                if (IsCurrentCellAlive(index))
-                    count++;
+                byte nCount = neighbours[x,y];
+                if (currentStepData[x,y] )
+                    currentStepData[x,y] = nCount >= 2 && nCount <= 3;
+                else if (nCount == 3)
+                    currentStepData[x,y] = true;
             }
         }
-        if (IsCurrentCellAlive(GetIndex(x, y)))
-            count--;
-
-        return count;
+        
+        Array.Clear(neighbours, 0, neighbours.Length);
+        UpdateTexture();
     }
-    private int GetIndex(int x, int y) => x + y * height;
+    private void CollectAllNeighboursCount()
+    {
+        for (int x = 0; x < width; x++)
+        {
+            for (int y = 0; y < height; y++)
+            {
+                if (currentStepData[x,y])
+                    incNeighbours(x, y);
+            }
+        }
 
-    private bool IsCurrentCellAlive(int i)
-        => currentStepData[i] == byte.MaxValue;
-
+        void incNeighbours(int x, int y)
+        {
+            foreach (var offset in neighbourOffsets)
+            {
+                int fX = x + offset.Item1;
+                int fY = y + offset.Item2;
+                if (fX >= 0 && fX < width && fY >= 0 && fY < height)
+                    ++neighbours[x + offset.Item1, y + offset.Item2];
+            }
+        }
+    }
 
     public override void CheckClick(Vector2 pointerPos)
     {
@@ -83,14 +94,9 @@ public class TextureLifeRunner : LifeRunner
         int py = (int)((localPoint.y - r.y) * height / r.height);
 
         if (px >= 0 && px < r.width && py >= 0 && py < r.height)
-            SetCurrentCellAlive(GetIndex(px, py), true);
+        {
+            currentStepData[px,py] = !currentStepData[px,py];
+            UpdateTexture();
+        }
     }
-    public void SetCurrentCellAlive(int i, bool alive)
-    {
-        currentStepData[i] = alive ? byte.MaxValue : byte.MinValue;
-        SetTexture(currentStepData);
-        SetNextCellAlive(i, alive);
-    }
-    private void SetNextCellAlive(int i, bool alive)
-        => nextStepData[i] = alive ? byte.MaxValue : byte.MinValue;
 }

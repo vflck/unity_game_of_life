@@ -420,7 +420,7 @@ RectTransform:
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
   m_AnchoredPosition: {x: 0, y: 0}
-  m_SizeDelta: {x: 100, y: 100}
+  m_SizeDelta: {x: 200, y: 200}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &1587204916
 MonoBehaviour:
@@ -502,9 +502,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 54349dc5bfaf44730a5767155dca5807, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  fieldSize: {x: 100, y: 100}
+  fieldSize: {x: 200, y: 200}
   lifeRunner: {fileID: 2020117152}
-  updateRate: 1
+  updateRate: 24
   isRunning: 0
 --- !u!114 &2020117152
 MonoBehaviour:
@@ -554,7 +554,7 @@ RectTransform:
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
   m_AnchoredPosition: {x: 0, y: 0}
-  m_SizeDelta: {x: 100, y: 100}
+  m_SizeDelta: {x: 200, y: 200}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &2042484933
 MonoBehaviour:
